@@ -23,7 +23,7 @@ app.UseHttpsRedirection();
 
 app.MapGet("/skills", async  () =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
     using var connection = new SqlConnection(connectionString);
     var skills = await connection.QueryAsync<Skill>("SELECT id, name, icon FROM skills");
@@ -34,12 +34,10 @@ app.MapGet("/skills", async  () =>
 
 app.MapPost("/skills", async (Skill skill) =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var connectionString = Environment.GetEnvironmentVariable("DATABASE_CONNECTION_STRING") ??  builder.Configuration.GetConnectionString("DefaultConnection");
 
     using var connection = new SqlConnection(connectionString);
-    const string insertQuery = "INSERT INTO skills (name, icon) VALUES (@name, @icon);";
-
-    var result = await connection.ExecuteAsync(insertQuery, new { skill.name, skill.icon });
+    var result = await connection.ExecuteAsync("INSERT INTO skills (name, icon) VALUES (@name, @icon);", new { skill.name, skill.icon });
 
     return result > 0 ? Results.Ok("Skill added successfully") : Results.Problem("Failed to add skill.");
 });
